@@ -230,8 +230,8 @@ void main(void)
 
 
         // Adjust thresholds
-        float waterToGrass = smoothstep(0.2, 0.5, normalizedHeight);
-        float grassToMountain = smoothstep(0.5, 1.04, normalizedHeight);
+        float waterToGrass = smoothstep(0.01, 0.9, normalizedHeight);
+        float grassToMountain = smoothstep(0.9, 1.04, normalizedHeight);
         float mountainToSnow = smoothstep(1.04, 1.07, normalizedHeight);
 
         // Add desert blending

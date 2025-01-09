@@ -82,10 +82,10 @@ void DrawPatchModel(Model *m, GLuint program, const char* vertexVariableName, co
 
 // Tesselation control variables
 // Feel free to change these initializations!
-GLint TessLevelInner = 1;
-GLint TessLevelOuter1 = 1;
-GLint TessLevelOuter2 = 1;
-GLint TessLevelOuter3 = 1;
+GLint TessLevelInner = 11;
+GLint TessLevelOuter1 = 11;
+GLint TessLevelOuter2 = 11;
+GLint TessLevelOuter3 = 11;
 
 
 mat4 projectionMatrix;
@@ -102,7 +102,7 @@ void init(void)
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_TRUE);
-	
+
 
 	// Load and compile shader
 	shader = loadShadersGT("lab4.vs", "lab4.fs", "lab4.gs",
@@ -130,7 +130,6 @@ void init(void)
 	glUniformMatrix4fv(glGetUniformLocation(shader, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
 
 }
-
 void display(void)
 {
 	// clear the screen
@@ -144,57 +143,11 @@ void display(void)
 
 	DrawPatchModel(cube, shader, "in_Position", "in_Normal", "in_TexCoord");
 
+
+
 	glutSwapBuffers();
 }
 
-void key(unsigned char key, int x, int y)
-{
-	glUseProgram(shader);
-
-	if (key == '+')
-		TessLevelInner++;
-	if (key == '-')
-		if (TessLevelInner > 1)
-			TessLevelInner--;
-	if (key == '.')
-	{
-		TessLevelOuter1++;
-		TessLevelOuter2++;
-		TessLevelOuter3++;
-	}
-	if (key == ',')
-	{
-		if (TessLevelOuter1 > 1)
-			TessLevelOuter1--;
-		if (TessLevelOuter2 > 1)
-			TessLevelOuter2--;
-		if (TessLevelOuter3 > 1)
-			TessLevelOuter3--;
-	}
-
-	if (key == '2')
-		TessLevelOuter1++;
-	if (key == '1')
-		if (TessLevelOuter1 > 1)
-			TessLevelOuter1--;
-	if (key == '4')
-		TessLevelOuter2++;
-	if (key == '3')
-		if (TessLevelOuter2 > 1)
-			TessLevelOuter2--;
-	if (key == '6')
-		TessLevelOuter3++;
-	if (key == '5')
-		if (TessLevelOuter3 > 1)
-			TessLevelOuter3--;
-
-	printf("TessLevelInner = %d TessLevelOuter1 = %d TessLevelOuter2 = %d TessLevelOuter3 = %d\n", TessLevelInner, TessLevelOuter1, TessLevelOuter2, TessLevelOuter3);
-	glUniform1i(glGetUniformLocation(shader, "TessLevelInner"), TessLevelInner);
-	glUniform1i(glGetUniformLocation(shader, "TessLevelOuter1"), TessLevelOuter1);
-	glUniform1i(glGetUniformLocation(shader, "TessLevelOuter2"), TessLevelOuter2);
-	glUniform1i(glGetUniformLocation(shader, "TessLevelOuter3"), TessLevelOuter3);
-	glutPostRedisplay();
-}
 
 
 int prevx = 0, prevy = 0;
@@ -206,6 +159,10 @@ void mouseUpDown(int button, int state, int x, int y)
 		prevx = x;
 		prevy = y;
 	}
+
+	 // Print the matrix values
+    printf("Matrix values:\n");
+    printMat4(worldToViewMatrix);
 }
 
 void mouseDragged(int x, int y)
@@ -242,11 +199,11 @@ int main(int argc, char *argv[])
 	glutInitContextVersion(3, 2);
 	glutInitWindowSize(800, 800);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
-	glutCreateWindow ("Lab 4");
+	glutCreateWindow ("Projekt");
 	glutDisplayFunc(display);
 	glutMouseFunc(mouseUpDown);
 	glutMotionFunc(mouseDragged);
-	glutKeyboardFunc(key);
+	//glutKeyboardFunc(key);
 	glutRepeatingTimer(10);
 	init ();
 	glutMainLoop();

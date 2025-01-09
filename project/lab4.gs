@@ -94,6 +94,9 @@ vec3 fbm(vec3 p){
 
 void computeVertex(int nr)
 {
+    
+
+
     // Get the vertex position in object space
     vec3 p = vec3(teWorldPos[nr]);
 
@@ -229,8 +232,8 @@ void main()
     float altitude = length(centr);
     float rnd = noise(vec2(centr.x, centr.z));
 
-    //if (altitude > 0.6 && altitude < 1.05 && rnd > 0.8)
-    if (altitude > 0.6)
+    if (altitude > 0.6 && altitude < 1.05 && rnd > 0.8)
+    //if (altitude > 0.6)
     //if (gl_PrimitiveIDIn == 0)
     {
         //only spawn billboards when walking the planet
@@ -251,5 +254,8 @@ void main()
 
         EndPrimitive();
     }
+
+    
+
 }
 
