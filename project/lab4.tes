@@ -58,7 +58,7 @@ void main()
 
     vec3 spherePos = normalize(worldPos.xyz);
 
-    float displacement = noise(spherePos*5.0)*0.1;
+    float displacement = noise(spherePos*5.0)*0.25;
 
     float waterLevel = 0.2;
 
@@ -77,13 +77,13 @@ void main()
     // We store the final position in a custom varying
     teWorldPos = spherePos;             // This is your final 3D coordinate
 
-    // Then set gl_Position to that in clip space. If you want the geometry 
+    // Then set gl_Position to that in clip space. If you want the geometry
     // still in camera space eventually, you might wait until the geometry shader
-    // to multiply by MVP. Or do it here. 
+    // to multiply by MVP. Or do it here.
     // For now let's just pass it in "object/world" space and handle the MVP later.
 
     gl_Position = vec4(spherePos, 1.0);
-    
+
 
     // Pass interpolated texture coordinates and normalized normals
     teTexCoord = v0 + v1 + v2;

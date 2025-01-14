@@ -88,7 +88,21 @@ GLint TessLevelOuter3 = 11;
 
 
 mat4 projectionMatrix;
-mat4 worldToViewMatrix, modelToWorldMatrix;
+mat4 worldToViewMatrix, modelToWorldMatrix, worldToViewMatrix2nd;
+
+float latDeg = 10.0f;   // latitude in degrees
+float lonDeg = 45.0f;   // longitude in degrees
+
+// Convert degrees to radians
+float lat = latDeg * (3.14159265359f / 180.0f);
+float lon = lonDeg * (3.14159265359f / 180.0f);
+float x = cos(lat) * cos(lon);
+float y = cos(lat) * sin(lon);
+float z = sin(lat);
+float standingHeight = .5f; // e.g. a person’s height in the same units
+
+float sizeX = 800;
+float sizeY = 800;
 
 Model *cube;
 // Reference to shader program
@@ -160,7 +174,7 @@ void init(void)
 	glClearColor(0.0,0.0,0.0,1.0);//(0.5,0.6,1.0,0);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
-	// glCullFace(GL_TRUE);
+	//glCullFace(GL_TRUE);
 
 	// Load and compile shader
 	shader = loadShadersGT("lab4.vs", "lab4.fs", "lab4.gs",
@@ -170,38 +184,19 @@ void init(void)
 	// Upload geometry to the GPU:
 	cube = LoadModelPlus("cube.obj");
 
-	float latDeg = 10.0f;   // latitude in degrees
-	float lonDeg = 45.0f;   // longitude in degrees
-
-	// Convert degrees to radians
-	float lat = latDeg * (3.14159265359f / 180.0f);
-	float lon = lonDeg * (3.14159265359f / 180.0f);
-
-	// Convert lat/long to a "unit sphere" direction (assuming y = up, x = east, z = north, etc.)
-	float x = cos(lat) * cos(lon);
-	float y = cos(lat) * sin(lon);
-	float z = sin(lat);
-
-	vec3 spherePos = normalize(vec3(x, y, z)); 
-	// length(spherePos) = 1.0
-
-	// Let's say you have float noise3D(vec3) that matches your GLSL noise(...)
-	float displacement = noise(spherePos * 5.0f) * 0.1f;
-
 	// Check water vs. land
 	float waterLevel = 0.2f;
-	float height = 1.0f + displacement; // '1.0' because spherePos is unit length
+    vec3 spherePos = normalize(vec3(x, y, z));
 
 
+    float displacement = noise(spherePos * 5.0f) * 0.1f;
+    float height = 1.0f + displacement; // '1.0' because spherePos is unit length
 	if (height > waterLevel)
 	{
 		// spherePos += spherePos * displacement * 5.0 -> multiply radius
 		spherePos *= (1.0f + 5.0f * displacement);
 	}
-	printVec3(spherePos);
 
-
-	float standingHeight = 1.0f; // e.g. a person’s height in the same units
 	vec3 cameraPos = spherePos + normalize(spherePos) * standingHeight;
 
 	vec3 up = normalize(spherePos); // local "up" = normal from center
@@ -210,10 +205,11 @@ void init(void)
 	// If the cross is near zero (e.g. if up ~ (0,1,0)), pick a fallback direction
 
 	worldToViewMatrix = lookAt(cameraPos, cameraPos + forward, up);
+	worldToViewMatrix2nd = lookAt(0,0,0);
 
 	// Initialize transformations
 	// projectionMatrix = frustum(-0.5, 0.5, -0.5, 0.5, 1.0, 100.0);
-	projectionMatrix = frustum(-0.1, 0.1, -0.5, 0.5, 0.05, 100.0);
+	projectionMatrix = frustum(-0.1, 0.1, -0.5, 0.5, 0.05, 10.0);
 
 	//glm::frustum(
 	// 	float left,   float right,
@@ -235,6 +231,7 @@ void init(void)
 
 	// Upload matrices that we do not intend to change.
 	glUniformMatrix4fv(glGetUniformLocation(shader, "camMatrix"), 1, GL_TRUE, worldToViewMatrix.m);
+	glUniformMatrix4fv(glGetUniformLocation(shader, "specMatrix"), 1, GL_TRUE, worldToViewMatrix2nd.m);
 	glUniformMatrix4fv(glGetUniformLocation(shader, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
 
 }
@@ -251,9 +248,8 @@ void display(void)
 
 	DrawPatchModel(cube, shader, "in_Position", "in_Normal", "in_TexCoord");
 
-
-
 	glutSwapBuffers();
+
 }
 
 
@@ -298,6 +294,29 @@ void mouseDragged(int x, int y)
 	prevx = x;
 	prevy = y;
 
+    // Check water vs. land
+	float waterLevel = 0.2f;
+    vec3 spherePos = normalize(vec3(x, y, z));
+
+
+    float displacement = noise(spherePos * 5.0f) * 0.1f;
+    float height = 1.0f + displacement; // '1.0' because spherePos is unit length
+	if (height > waterLevel)
+	{
+		// spherePos += spherePos * displacement * 5.0 -> multiply radius
+		spherePos *= (1.0f + 5.0f * displacement);
+	}
+
+	vec3 cameraPos = spherePos + normalize(spherePos) * standingHeight;
+
+	vec3 up = normalize(spherePos); // local "up" = normal from center
+	// Some direction tangent to 'up' (e.g. heading due east):
+	vec3 forward = normalize(cross(vec3(0,1,0), up));
+	// If the cross is near zero (e.g. if up ~ (0,1,0)), pick a fallback direction
+
+	worldToViewMatrix = lookAt(cameraPos, cameraPos + forward, up);
+	glUniformMatrix4fv(glGetUniformLocation(shader, "camMatrix"), 1, GL_TRUE, worldToViewMatrix.m);
+
 	glutPostRedisplay();
 }
 
@@ -305,9 +324,9 @@ int main(int argc, char *argv[])
 {
 	glutInit(&argc, argv);
 	glutInitContextVersion(3, 2);
-	glutInitWindowSize(800, 800);
+	glutInitWindowSize(sizeX, sizeY);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
-	glutCreateWindow ("Projekt");
+	glutCreateWindow("Projekt");
 	glutDisplayFunc(display);
 	glutMouseFunc(mouseUpDown);
 	glutMotionFunc(mouseDragged);

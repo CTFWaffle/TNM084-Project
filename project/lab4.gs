@@ -19,6 +19,7 @@ uniform sampler2D tex;
 uniform mat4 projMatrix;
 uniform mat4 mdlMatrix;
 uniform mat4 camMatrix;
+uniform mat4 specMatrix;
 uniform vec3 cameraPosWS;
 
 
@@ -94,9 +95,6 @@ vec3 fbm(vec3 p){
 
 void computeVertex(int nr)
 {
-    
-
-
     // Get the vertex position in object space
     vec3 p = vec3(teWorldPos[nr]);
 
@@ -109,12 +107,6 @@ void computeVertex(int nr)
     vec3 p1 = p + epsilon * tangent1;
     vec3 p2 = p + epsilon * tangent2;
     vec3 p3 = p - epsilon * tangent1 - epsilon * tangent2;
-
-    // Apply displacement (or deformation) to these points
-    // p += fbm(p);      // Displacement for the current vertex
-    // p1 += fbm(p1);    // Displacement for the first tangent point
-    // p2 += fbm(p2);    // Displacement for the second tangent point
-    // p3 += fbm(p3);
 
     // Compute the normal using the cross product of the displaced tangent vectors
     vec3 edge1 = p1 - p3;
@@ -137,20 +129,6 @@ void computeVertex(int nr)
 }
 
 
-// void computeVertex(int nr)
-// {
-// 	vec3 p, v1, v2, v3, p1, p2, p3, s1, s2, n;
-
-// 	p = vec3(gl_in[nr].gl_Position);
-// 	// Add interesting code here
-// 	gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(p, 1.0);
-
-//     gsTexCoord = teTexCoord[0];
-
-// 	n = teNormal[nr]; // This is not the normal you are looking for. Move along!
-//     gsNormal = mat3(camMatrix * mdlMatrix) * n;
-//     EmitVertex();
-// }
 
 void spawnBillboard(vec3 centerWS) // center in world space
 {
@@ -177,22 +155,6 @@ void spawnBillboard(vec3 centerWS) // center in world space
     vec3 tr = centerWS + ( right * halfWidth) + (up * halfHeight);
     vec3 br = centerWS + ( right * halfWidth);
 
-    // Now transform to clip space for each corner:
-    // gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(tl, 1.0);
-    // isBillboard = 1;
-    // EmitVertex();
-
-    // gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(bl, 1.0);
-    // isBillboard = 1;
-    // EmitVertex();
-
-    // gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(tr, 1.0);
-    // isBillboard = 1;
-    // EmitVertex();
-
-    // gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(br, 1.0);
-    // isBillboard = 1;
-    // EmitVertex();
     gl_Position = projMatrix * camMatrix * vec4(tl, 1.0);
     isBillboard = 1;
     EmitVertex();
