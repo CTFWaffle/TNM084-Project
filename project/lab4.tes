@@ -56,15 +56,11 @@ void main()
     // Interpolated world position
     vec4 worldPos = p0 + p1 + p2;
 
-    // Normalize position to form a sphere
-    //float radie = 0.5; // Desired sphere radius
-    //float d = length(worldPos.xyz);
-    //gl_Position = (radie / d) * worldPos; // Scale to sphere surface
     vec3 spherePos = normalize(worldPos.xyz);
 
     float displacement = noise(spherePos*5.0)*0.1;
 
-    float waterLevel = 0.02;
+    float waterLevel = 0.2;
 
     float height = length(spherePos) + displacement;
 
@@ -74,6 +70,9 @@ void main()
     }
 
     //spherePos += spherePos * displacement;
+
+    // try without displacement
+    //spherePos = normalize(worldPos.xyz);
 
     // We store the final position in a custom varying
     teWorldPos = spherePos;             // This is your final 3D coordinate

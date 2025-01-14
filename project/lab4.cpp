@@ -1,4 +1,3 @@
-
 // uses framework Cocoa
 // uses framework OpenGL
 #define MAIN
@@ -95,14 +94,73 @@ Model *cube;
 // Reference to shader program
 GLuint shader;
 
+inline float lerp(float a, float b, float t)
+{
+    return a + t * (b - a);
+}
+
+double floor(double v) {
+	return v - (int)v;
+}
+
+inline vec3 floor(const vec3& v)
+{
+    return vec3(
+        floor(v.x),
+        floor(v.y),
+        floor(v.z)
+	);
+}
+
+inline vec3 fract(const vec3& v)
+{
+    return vec3(
+        v.x - floor(v.x),
+        v.y - floor(v.y),
+        v.z - floor(v.z)
+	);
+}
+
+vec3 random3(vec3 st)
+{
+    st = vec3( dot(st,vec3(127.1,311.7, 543.21)),
+              dot(st,vec3(269.5,183.3, 355.23)),
+              dot(st,vec3(846.34,364.45, 123.65)) ); // Haphazard additional numbers by IR
+    return -1.0 + 2.0*fract(vec3(sin(st.x),sin(st.y),sin(st.z))*43758.5453123);
+}
+
+// Gradient Noise by Inigo Quilez - iq/2013
+// https://www.shadertoy.com/view/XdXGW8
+// Trivially extended to 3D by Ingemar
+float noise(vec3 st)
+{
+    vec3 i = floor(st);
+    vec3 f = fract(st);
+
+    vec3 u = f*f*(3.0-2.0*f);
+
+    return lerp(
+    			lerp( lerp( dot( random3(i + vec3(0.0,0.0,0.0) ), f - vec3(0.0,0.0,0.0) ),
+                     dot( random3(i + vec3(1.0,0.0,0.0) ), f - vec3(1.0,0.0,0.0) ), u.x),
+                lerp( dot( random3(i + vec3(0.0,1.0,0.0) ), f - vec3(0.0,1.0,0.0) ),
+                     dot( random3(i + vec3(1.0,1.0,0.0) ), f - vec3(1.0,1.0,0.0) ), u.x), u.y),
+
+    			lerp( lerp( dot( random3(i + vec3(0.0,0.0,1.0) ), f - vec3(0.0,0.0,1.0) ),
+                     dot( random3(i + vec3(1.0,0.0,1.0) ), f - vec3(1.0,0.0,1.0) ), u.x),
+                lerp( dot( random3(i + vec3(0.0,1.0,1.0) ), f - vec3(0.0,1.0,1.0) ),
+                     dot( random3(i + vec3(1.0,1.0,1.0) ), f - vec3(1.0,1.0,1.0) ), u.x), u.y), u.z
+
+          	);
+}
+
+
 void init(void)
 {
 	// GL inits
 	glClearColor(0.0,0.0,0.0,1.0);//(0.5,0.6,1.0,0);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
-	glCullFace(GL_TRUE);
-
+	// glCullFace(GL_TRUE);
 
 	// Load and compile shader
 	shader = loadShadersGT("lab4.vs", "lab4.fs", "lab4.gs",
@@ -112,13 +170,63 @@ void init(void)
 	// Upload geometry to the GPU:
 	cube = LoadModelPlus("cube.obj");
 
-	// Initialize transformations
-	projectionMatrix = frustum(-0.5, 0.5, -0.5, 0.5, 1.0, 100.0);
-	worldToViewMatrix = lookAt(0, 0, 3, 0,0,0, 0,1,0); // change camPosLoc if first three values change
-	modelToWorldMatrix = IdentityMatrix();
+	float latDeg = 10.0f;   // latitude in degrees
+	float lonDeg = 45.0f;   // longitude in degrees
 
-	GLint camPosLoc = glGetUniformLocation(shader, "cameraPosWS");
-	glUniform3f(camPosLoc, 0.0f, 0.0f, 3.0f);
+	// Convert degrees to radians
+	float lat = latDeg * (3.14159265359f / 180.0f);
+	float lon = lonDeg * (3.14159265359f / 180.0f);
+
+	// Convert lat/long to a "unit sphere" direction (assuming y = up, x = east, z = north, etc.)
+	float x = cos(lat) * cos(lon);
+	float y = cos(lat) * sin(lon);
+	float z = sin(lat);
+
+	vec3 spherePos = normalize(vec3(x, y, z)); 
+	// length(spherePos) = 1.0
+
+	// Let's say you have float noise3D(vec3) that matches your GLSL noise(...)
+	float displacement = noise(spherePos * 5.0f) * 0.1f;
+
+	// Check water vs. land
+	float waterLevel = 0.2f;
+	float height = 1.0f + displacement; // '1.0' because spherePos is unit length
+
+
+	if (height > waterLevel)
+	{
+		// spherePos += spherePos * displacement * 5.0 -> multiply radius
+		spherePos *= (1.0f + 5.0f * displacement);
+	}
+	printVec3(spherePos);
+
+
+	float standingHeight = 1.0f; // e.g. a person’s height in the same units
+	vec3 cameraPos = spherePos + normalize(spherePos) * standingHeight;
+
+	vec3 up = normalize(spherePos); // local "up" = normal from center
+	// Some direction tangent to 'up' (e.g. heading due east):
+	vec3 forward = normalize(cross(vec3(0,1,0), up));
+	// If the cross is near zero (e.g. if up ~ (0,1,0)), pick a fallback direction
+
+	worldToViewMatrix = lookAt(cameraPos, cameraPos + forward, up);
+
+	// Initialize transformations
+	// projectionMatrix = frustum(-0.5, 0.5, -0.5, 0.5, 1.0, 100.0);
+	projectionMatrix = frustum(-0.1, 0.1, -0.5, 0.5, 0.05, 100.0);
+
+	//glm::frustum(
+	// 	float left,   float right,
+	// 	float bottom, float top,
+	// 	float nearVal, float farVal
+	// );
+
+
+	//worldToViewMatrix = lookAt(0, 0, 3, 0,0,0, 0,1,0); // change camPosLoc if first three values change
+	// worldToViewMatrix = lookAt(0, 1, 0, //eye
+	// 						   0, 1, 1, //center/looking at
+	// 						   0, 1, 0); //up
+	modelToWorldMatrix = IdentityMatrix();
 
 	glUniform1i(glGetUniformLocation(shader, "TessLevelInner"), TessLevelInner);
 	glUniform1i(glGetUniformLocation(shader, "TessLevelOuter1"), TessLevelOuter1);
