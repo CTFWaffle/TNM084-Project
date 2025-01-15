@@ -459,3 +459,94 @@
 
 1736860075 x:\tnm084\projektet\walking\tnm084-project-main\project\noise1234.h
 
+1736949145 source:e:\programmering\tnm084-project\common\gl_utilities.c
+	<Windows.h>
+	<stdlib.h>
+	<stdio.h>
+	<stddef.h>
+	<string.h>
+	"GL_utilities.h"
+
+1736949145 e:\programmering\tnm084-project\common\gl_utilities.h
+	<OpenGL/gl3.h>
+	"glew.h"
+	<GL/gl.h>
+	<GL/gl.h>
+	<stdlib.h>
+
+1736949145 e:\programmering\tnm084-project\common\windows\glew.h
+	<stddef.h>
+	<inttypes.h>
+	<stdint.h>
+	<inttypes.h>
+	<Availability.h>
+	<OpenGL/glu.h>
+	<GL/glu.h>
+
+1736949145 source:e:\programmering\tnm084-project\common\loadtga.c
+	"LoadTGA.h"
+
+1736949145 e:\programmering\tnm084-project\common\loadtga.h
+	<OpenGL/gl3.h>
+	"glew.h"
+	<GL/gl.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
+1736949145 source:e:\programmering\tnm084-project\common\windows\glew.c
+	"glew.h"
+	"wglew.h"
+	<GL/glxew.h>
+	<stddef.h>
+	<dlfcn.h>
+	<stdio.h>
+	<stdlib.h>
+	<stdlib.h>
+	<string.h>
+	<AvailabilityMacros.h>
+	<dlfcn.h>
+	<mach-o/dyld.h>
+
+1736949145 e:\programmering\tnm084-project\common\windows\wglew.h
+	<windows.h>
+
+1736949145 source:e:\programmering\tnm084-project\common\windows\microglut.c
+	<windows.h>
+	"glew.h"
+	<gl/gl.h>
+	"MicroGlut.h"
+	<stdio.h>
+	<io.h>
+	<fcntl.h>
+
+1736949145 e:\programmering\tnm084-project\common\windows\microglut.h
+
+1736974982 source:e:\programmering\tnm084-project\project\lab4.cpp
+	"GL_utilities.h"
+	"VectorUtils4.h"
+	"LittleOBJLoader.h"
+	"LoadTGA.h"
+	"MicroGlut.h"
+	"noise1234.h"
+
+1736949145 e:\programmering\tnm084-project\common\vectorutils4.h
+	<OpenGL/gl3.h>
+	"glew.h"
+	<GL/gl.h>
+	<math.h>
+	<stdio.h>
+
+1736949145 e:\programmering\tnm084-project\common\littleobjloader.h
+	<OpenGL/gl3.h>
+	"glew.h"
+	<GL/gl.h>
+	"VectorUtils4.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<math.h>
+	"VectorUtils4.h"
+
+1736949145 e:\programmering\tnm084-project\project\noise1234.h
+

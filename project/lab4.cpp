@@ -237,19 +237,38 @@ void init(void)
 }
 void display(void)
 {
-	// clear the screen
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // clear the screen
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glUniformMatrix4fv(glGetUniformLocation(shader, "mdlMatrix"), 1, GL_TRUE, modelToWorldMatrix.m);
+    // First viewport (left half of the window)
+    glViewport(0, 0, sizeX, sizeY);
+    glUniformMatrix4fv(glGetUniformLocation(shader, "mdlMatrix"), 1, GL_TRUE, modelToWorldMatrix.m);
+    glUniformMatrix4fv(glGetUniformLocation(shader, "camMatrix"), 1, GL_TRUE, worldToViewMatrix.m);
 
-	float elapsedTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0f; // Convert milliseconds to seconds
+    float elapsedTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0f; // Convert milliseconds to seconds
     GLint timeUniformLocation = glGetUniformLocation(shader, "u_time");
     glUniform1f(timeUniformLocation, elapsedTime);
 
-	DrawPatchModel(cube, shader, "in_Position", "in_Normal", "in_TexCoord");
+    DrawPatchModel(cube, shader, "in_Position", "in_Normal", "in_TexCoord");
 
-	glutSwapBuffers();
+    // Clear depth buffer before drawing the second viewport
+    glClear(GL_DEPTH_BUFFER_BIT);
 
+    // Second viewport (right half of the window)
+    glViewport(sizeX, 0, sizeX, sizeY);
+
+    // Set up a new camera for the second view
+    mat4 secondViewMatrix = lookAt(
+        vec3(1.0f, 1.0f, 1.0f), // Camera position
+        vec3(0.0f, 0.0f, 0.0f), // Look at the origin
+        vec3(0.0f, 1.0f, 0.0f)  // Up vector
+    );
+    glUniformMatrix4fv(glGetUniformLocation(shader, "camMatrix"), 1, GL_TRUE, secondViewMatrix.m);
+
+    // Render the scene from the second camera's perspective
+    DrawPatchModel(cube, shader, "in_Position", "in_Normal", "in_TexCoord");
+
+    glutSwapBuffers();
 }
 
 
@@ -324,7 +343,7 @@ int main(int argc, char *argv[])
 {
 	glutInit(&argc, argv);
 	glutInitContextVersion(3, 2);
-	glutInitWindowSize(sizeX, sizeY);
+	glutInitWindowSize(sizeX*2, sizeY);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutCreateWindow("Projekt");
 	glutDisplayFunc(display);
