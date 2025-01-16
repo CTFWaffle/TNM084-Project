@@ -1,9 +1,6 @@
 // uses framework Cocoa
 // uses framework OpenGL
 #define MAIN
-// #define STB_IMAGE_IMPLEMENTATION
-// #include <iostream> 
-// #include "stb_image.h"
 #include "GL_utilities.h"
 #include "VectorUtils4.h"
 #include "LittleOBJLoader.h"
@@ -190,48 +187,6 @@ void init(void)
 	// Upload geometry to the GPU:
 	cube = LoadModelPlus("cube.obj");
 
-	// 1) Load raw pixel data
-	// int width, bheight, channels;
-	// unsigned char* data = stbi_load("tree_billboard.png", &width, &bheight, &channels, 4);
-	// if (!data)
-	// {
-	// 	std::cerr << "Failed to load tree_billboard.png\n";
-	// 	// handle error
-	// }
-
-	// // 2) Generate and bind a texture object
-	// GLuint treeTextureID;
-	// glGenTextures(1, &treeTextureID);
-	// glBindTexture(GL_TEXTURE_2D, treeTextureID);
-
-	// // 3) Upload the pixel data into the GPU texture
-	// glTexImage2D(GL_TEXTURE_2D,      // target
-	// 			0,                  // mipmap level
-	// 			GL_RGBA8,           // internal format
-	// 			width,
-	// 			bheight,
-	// 			0,                  // border
-	// 			GL_RGBA,            // format of input data
-	// 			GL_UNSIGNED_BYTE,   // type of input data
-	// 			data);
-
-	// // 4) Generate mipmaps (optional but recommended)
-	// glGenerateMipmap(GL_TEXTURE_2D);
-
-	// // 5) Set texture parameters as needed
-	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	// // 6) Free CPU-side image memory
-	// stbi_image_free(data);
-
-	// // unbind if you like
-	// glBindTexture(GL_TEXTURE_2D, 0);
-
-	// glActiveTexture(GL_TEXTURE0);
-	// glBindTexture(GL_TEXTURE_2D, treeTextureID);
-	// GLint loc = glGetUniformLocation(shader, "treeTex");
-	// glUniform1i(loc, 0);
 	GLuint treeTextureID;
 	SDL_Surface *surface;
 	surface = IMG_Load("tree_billboard.png");
