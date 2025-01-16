@@ -2,7 +2,7 @@
 
 layout(triangles) in;
 // Use line_strip for visualization and triangle_strip for solids
-layout(triangle_strip, max_vertices = 7) out;
+layout(triangle_strip, max_vertices = 11) out;
 //layout(line_strip, max_vertices = 3) out;
 in vec2 teTexCoord[3];
 in vec3 teNormal[3];
@@ -20,11 +20,12 @@ uniform mat4 projMatrix;
 uniform mat4 mdlMatrix;
 uniform mat4 camMatrix;
 uniform mat4 specMatrix;
-uniform vec3 cameraPosWS;
+uniform vec3 cameraPos;
 
 
 uniform float disp;
 uniform int texon;
+vec3 normal;
 
 vec2 random2(vec2 st)
 {
@@ -111,7 +112,7 @@ void computeVertex(int nr)
     // Compute the normal using the cross product of the displaced tangent vectors
     vec3 edge1 = p1 - p3;
     vec3 edge2 = p2 - p3;
-    vec3 normal = normalize(cross(edge1, edge2));
+    normal = normalize(cross(edge1, edge2));
 
     // Transform the vertex position
     gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(p, 1.0);
@@ -141,33 +142,105 @@ void spawnBillboard(vec3 centerWS) // center in world space
 
 
     // TODO These are wrong if the billboards should face the camera
-    vec3 forward = normalize(centerWS - cameraPosWS);
-    vec3 right = normalize(cross(vec3(0.0,1.0,0.0), forward));
-    vec3 up    = cross(forward, right);   // or do another cross to keep it orthonormal
+    // vec3 forward = normalize(centerWS - cameraPos);
+    // vec3 forward = normalize(cameraPos - centerWS);
 
+    // vec3 right = normalize(cross(vec3(0.0,1.0,0.0), forward));
+    // vec3 up    = cross(forward, right);   // or do another cross to keep it orthonormal
+
+    // 1) Compute forward, but flatten out the y-component so billboard is always upright
+    vec3 forward = cameraPos - centerWS;
+    //forward.y = 0.0;           // ignore vertical component
+    forward = normalize(forward);
+
+    // 2) 'Right' is cross(globalUp, forward)
+    vec3 globalUp = vec3(0, 1, 0);
+    vec3 right = normalize(cross(normalize(centerWS), forward));
+
+    // 3) Billboard's 'up' remains globalUp (0,1,0)
+    vec3 up = normalize(centerWS);
 
 
     float halfWidth  = 0.02;
     float halfHeight = 0.04;
 
-    vec3 tl = centerWS + (-right * halfWidth) + (up * halfHeight);
-    vec3 bl = centerWS + (-right * halfWidth);
-    vec3 tr = centerWS + ( right * halfWidth) + (up * halfHeight);
-    vec3 br = centerWS + ( right * halfWidth);
+    // vec3 tl = centerWS + (-right * halfWidth) + (up * halfHeight);
+    // vec3 bl = centerWS + (-right * halfWidth);
+    // vec3 tr = centerWS + ( right * halfWidth) + (up * halfHeight);
+    // vec3 br = centerWS + ( right * halfWidth);
 
-    gl_Position = projMatrix * camMatrix * vec4(tl, 1.0);
+    // corners
+    vec3 tl1 = centerWS - right*halfWidth + up*halfHeight;
+    vec3 bl1 = centerWS - right*halfWidth - up*halfHeight;
+    vec3 tr1 = centerWS + right*halfWidth + up*halfHeight;
+    vec3 br1 = centerWS + right*halfWidth - up*halfHeight;
+
+    vec3 tl2 = centerWS - forward*halfWidth + up*halfHeight;
+    vec3 bl2 = centerWS - forward*halfWidth - up*halfHeight;
+    vec3 tr2 = centerWS + forward*halfWidth + up*halfHeight;
+    vec3 br2 = centerWS + forward*halfWidth - up*halfHeight;
+
+
+
+    // gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(tl, 1.0);
+    // isBillboard = 1;
+    // EmitVertex();
+
+    // gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(bl, 1.0);
+    // isBillboard = 1;
+    // EmitVertex();
+
+    // gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(tr, 1.0);
+    // isBillboard = 1;
+    // EmitVertex();
+
+    // gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(br, 1.0);
+    // isBillboard = 1;
+    // EmitVertex();
+
+    // EndPrimitive();
+
+    // QUAD 1
+    gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(tl1, 1.0);
+    gsTexCoord = vec2(1.0, 0.0);
     isBillboard = 1;
     EmitVertex();
 
-    gl_Position = projMatrix * camMatrix * vec4(bl, 1.0);
+    gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(bl1, 1.0);
+    gsTexCoord = vec2(1.0, 1.0);
     isBillboard = 1;
     EmitVertex();
 
-    gl_Position = projMatrix * camMatrix * vec4(tr, 1.0);
+    gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(tr1, 1.0);
+    gsTexCoord = vec2(0.0, 0.0);
     isBillboard = 1;
     EmitVertex();
 
-    gl_Position = projMatrix * camMatrix * vec4(br, 1.0);
+    gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(br1, 1.0);
+    gsTexCoord = vec2(0.0, 1.0);
+    isBillboard = 1;
+    EmitVertex();
+
+    EndPrimitive();
+
+    // QUAD 2
+    gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(tl2, 1.0);
+    gsTexCoord = vec2(1.0, 0.0);
+    isBillboard = 1;
+    EmitVertex();
+
+    gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(bl2, 1.0);
+    gsTexCoord = vec2(1.0, 1.0);
+    isBillboard = 1;
+    EmitVertex();
+
+    gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(tr2, 1.0);
+    gsTexCoord = vec2(0.0, 0.0);
+    isBillboard = 1;
+    EmitVertex();
+
+    gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(br2, 1.0);
+    gsTexCoord = vec2(0.0, 1.0);
     isBillboard = 1;
     EmitVertex();
 
@@ -182,7 +255,7 @@ void main()
 	computeVertex(1);
 	computeVertex(2);
 
-    //EndPrimitive();
+    EndPrimitive();
 
     // Place vegetation
     vec3 p0 = vec3(teWorldPos[0]);
@@ -194,27 +267,13 @@ void main()
     float altitude = length(centr);
     float rnd = noise(vec2(centr.x, centr.z));
 
-    if (altitude > 0.6 && altitude < 1.05 && rnd > 0.8)
+    if (rnd > 0.1 && altitude > 0.2 && altitude < 1.0)// && altitude < 1.05 && rnd > 0.8)
     //if (altitude > 0.6)
     //if (gl_PrimitiveIDIn == 0)
     {
+
         //only spawn billboards when walking the planet
         spawnBillboard(centr);
-
-        //Emit a full-screen quad in clip-space:
-        gl_Position = vec4(-1.0, -1.0, 0.0, 1.0);
-        EmitVertex();
-
-        gl_Position = vec4(-1.0,  1.0, 0.0, 1.0);
-        EmitVertex();
-
-        gl_Position = vec4( 1.0, -1.0, 0.0, 1.0);
-        EmitVertex();
-
-        gl_Position = vec4( 1.0,  1.0, 0.0, 1.0);
-        EmitVertex();
-
-        EndPrimitive();
     }
 
     

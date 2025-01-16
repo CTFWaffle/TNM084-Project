@@ -8,6 +8,7 @@ flat in int isBillboard;
 
 uniform vec3 cameraPosWS;
 uniform float u_time;
+uniform sampler2D treeTexture;
 
 #define FADE(t) ( t * t * t * ( t * ( t * 6.0 - 15.0 ) + 10.0 ) )
 #define LERP(t, a, b) ((a) + (t) * ((b) - (a)))
@@ -195,11 +196,11 @@ void main(void)
         
         // Option A: Sample a texture with alpha (common approach for billboard trees)
         //   Make sure you set up blending or alpha testing in your main app code.
-        //vec4 treeColor = texture(treeTexture, gsTexCoord);
+        vec4 treeColor = texture(treeTexture, gsTexCoord);
 
         // Optionally you can do an alpha test (to discard pixels that are fully transparent)
-        //   if (treeColor.a < 0.1) discard;
-        vec4 treeColor = vec4(150.0,75.0,0.0,1.0);
+        if (treeColor.a < 0.1) discard;
+        // vec4 treeColor = vec4(150.0,75.0,0.0,1.0);
         out_Color = treeColor;
     }
     else
