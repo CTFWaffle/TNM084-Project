@@ -8,6 +8,7 @@ out vec2 teTexCoord;
 out vec3 teNormal;
 out vec3 teWorldPos;
 
+uniform float waterLevel;
 vec3 random3(vec3 st)
 {
     st = vec3( dot(st,vec3(127.1,311.7, 543.21)),
@@ -60,7 +61,7 @@ void main()
 
     float displacement = noise(spherePos*5.0)*0.25;
 
-    float waterLevel = 0.2;
+    //float waterLevel = 0.2;
 
     float height = length(spherePos) + displacement;
 

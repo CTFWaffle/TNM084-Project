@@ -103,6 +103,7 @@ float x = cos(lat) * cos(lon);
 float y = cos(lat) * sin(lon);
 float z = sin(lat);
 float standingHeight = .5f; // e.g. a person’s height in the same units
+float waterLevel = 100.0f;
 
 float sizeX = 800;
 float sizeY = 800;
@@ -202,12 +203,14 @@ void init(void)
 	glUniform1i(glGetUniformLocation(shader, "treeTexture"), 0);
 
 	// Check water vs. land
-	float waterLevel = 0.2f;
+	// float waterLevel = 0.2f;
+	glUniform1i(glGetUniformLocation(shader, "waterLevel"), waterLevel);
     vec3 spherePos = normalize(vec3(x, y, z));
 
 
     float displacement = noise(spherePos * 5.0f) * 0.1f;
     float height = 1.0f + displacement; // '1.0' because spherePos is unit length
+	printf("height: %f", height);
 	if (height > waterLevel)
 	{
 		// spherePos += spherePos * displacement * 5.0 -> multiply radius
@@ -314,7 +317,7 @@ void mouseDragged(int x, int y)
 	prevy = y;
 
     // Check water vs. land
-	float waterLevel = 0.2f;
+	// float waterLevel = 0.2f;
     vec3 spherePos = normalize(vec3(x, y, z));
 
 

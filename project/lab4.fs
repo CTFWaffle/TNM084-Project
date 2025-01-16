@@ -8,6 +8,7 @@ flat in int isBillboard;
 
 uniform vec3 cameraPosWS;
 uniform float u_time;
+uniform float waterLevel;
 uniform sampler2D treeTexture;
 
 #define FADE(t) ( t * t * t * ( t * ( t * 6.0 - 15.0 ) + 10.0 ) )
@@ -215,38 +216,42 @@ void main(void)
         
         vec3 waterColor = vec3(0.2, 0.2, 0.6);
         vec3 sandColor = vec3(0.9, 0.85, 0.7);
-        vec3 grassColor = vec3(0.4, 0.6, 0.4);
-        vec3 mountainColor = vec3(0.4, 0.35, 0.3);
+        vec3 grassColor = vec3(0.18, 0.24, 0.07);//vec3(0.4, 0.6, 0.4);
+        vec3 mountainColor = vec3(0.29, 0.29, 0.28);//vec3(0.4, 0.35, 0.3);
         vec3 snowColor = vec3(0.9, 0.9, 0.9);
 
-        float t = smoothstep(0.6, 1.0, normalizedHeight);
+        if (normalizedHeight < waterLevel) {
+            out_Color = vec4(waterColor,1.0);
+        } else {
+            float t = smoothstep(0.6, 1.0, normalizedHeight);
 
-        vec3 color;
+            vec3 color;
 
-        // Add details using curl noise (optional)
-        float flowIntensity = noiser(fbm(modelPosition) * 10.0, 0.1);
-        vec2 curl = computeCurl(modelPosition.xy * flowIntensity * 1.0);
-        float curlIntensity = length(curl);
-        vec3 curlColor = vec3(0.2, 0.2, 0.2) * curlIntensity * 0.5;
-
-
-        // Adjust thresholds
-        float waterToGrass = smoothstep(0.01, 0.9, normalizedHeight);
-        float grassToMountain = smoothstep(0.9, 1.04, normalizedHeight);
-        float mountainToSnow = smoothstep(1.04, 1.07, normalizedHeight);
-
-        // Add desert blending
-        float desertProbability = smoothstep(1.01, 1.015, normalizedHeight);
-
-        vec3 baseColor = mix(waterColor, grassColor, waterToGrass);
-        baseColor = mix(baseColor, mountainColor, grassToMountain);
-        baseColor = mix(baseColor, snowColor, mountainToSnow);
+            // Add details using curl noise (optional)
+            float flowIntensity = noiser(fbm(modelPosition) * 10.0, 0.1);
+            vec2 curl = computeCurl(modelPosition.xy * flowIntensity * 1.0);
+            float curlIntensity = length(curl);
+            vec3 curlColor = vec3(0.2, 0.2, 0.2) * curlIntensity * 0.5;
 
 
-        // Add curl noise for ruggedness
-        vec3 finalColor = baseColor + curlColor;
+            // Adjust thresholds
+            float waterToGrass = smoothstep(0.05, 0.9, normalizedHeight);
+            float grassToMountain = smoothstep(0.9, 1.07, normalizedHeight);
+            float mountainToSnow = smoothstep(1.07, 1.09, normalizedHeight);
 
-        out_Color = vec4(finalColor, 1.0);
+            // Add desert blending
+            float desertProbability = smoothstep(1.01, 1.015, normalizedHeight);
+
+            vec3 baseColor = mix(waterColor, grassColor, waterToGrass);
+            baseColor = mix(baseColor, mountainColor, grassToMountain);
+            baseColor = mix(baseColor, snowColor, mountainToSnow);
+
+
+            // Add curl noise for ruggedness
+            vec3 finalColor = baseColor + curlColor;
+
+            out_Color = vec4(finalColor, 1.0);
+        }
 
     }
 }
