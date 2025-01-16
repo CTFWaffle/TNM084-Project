@@ -105,8 +105,8 @@ float z = sin(lat);
 float standingHeight = .5f; // e.g. a person’s height in the same units
 float waterLevel = 100.0f;
 
-float sizeX = 800;
-float sizeY = 800;
+float sizeX = 1600;
+float sizeY = 1600;
 
 Model *cube;
 // Reference to shader program
@@ -178,7 +178,7 @@ void init(void)
 	glClearColor(0.0,0.0,0.0,1.0);//(0.5,0.6,1.0,0);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
-	//glCullFace(GL_TRUE);
+	glCullFace(GL_TRUE);
 
 	// Load and compile shader
 	shader = loadShadersGT("lab4.vs", "lab4.fs", "lab4.gs",
@@ -202,21 +202,6 @@ void init(void)
 	glBindTexture(GL_TEXTURE_2D, treeTextureID);
 	glUniform1i(glGetUniformLocation(shader, "treeTexture"), 0);
 
-	// Check water vs. land
-	float waterLevel = 0.2f;
-	GLuint treeTextureID;
-	SDL_Surface *surface;
-	surface = IMG_Load("tree_billboard.png");
-	glGenTextures(1,&treeTextureID);
-	glBindTexture(GL_TEXTURE_2D, treeTextureID);
-	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,surface->w,surface->h,0,GL_RGBA,GL_UNSIGNED_BYTE,surface->pixels);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	SDL_FreeSurface(surface);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, treeTextureID);
-	glUniform1i(glGetUniformLocation(shader, "treeTexture"), 0);
 
 	// Check water vs. land
 	glUniform1i(glGetUniformLocation(shader, "waterLevel"), waterLevel);
@@ -384,7 +369,7 @@ int main(int argc, char *argv[])
 {
 	glutInit(&argc, argv);
 	glutInitContextVersion(3, 2);
-	glutInitWindowSize(sizeX*2, sizeY);
+	glutInitWindowSize(sizeX, sizeY);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutCreateWindow("Projekt");
 	glutDisplayFunc(display);
