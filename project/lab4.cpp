@@ -7,6 +7,9 @@
 #include "LoadTGA.h"
 #include "MicroGlut.h"
 #include "noise1234.h"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+
 
 // ------------ DrawPatchModel: modified utility function DrawModel from LittleOBJLoader ---------------
 static void ReportRerror(const char *caller, const char *name)
@@ -100,6 +103,7 @@ float x = cos(lat) * cos(lon);
 float y = cos(lat) * sin(lon);
 float z = sin(lat);
 float standingHeight = .5f; // e.g. a person’s height in the same units
+float waterLevel = 100.0f;
 
 float sizeX = 800;
 float sizeY = 800;
@@ -184,13 +188,44 @@ void init(void)
 	// Upload geometry to the GPU:
 	cube = LoadModelPlus("cube.obj");
 
+	GLuint treeTextureID;
+	SDL_Surface *surface;
+	surface = IMG_Load("tree_billboard.png");
+	glGenTextures(1,&treeTextureID);
+	glBindTexture(GL_TEXTURE_2D, treeTextureID);
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,surface->w,surface->h,0,GL_RGBA,GL_UNSIGNED_BYTE,surface->pixels);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+	SDL_FreeSurface(surface);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, treeTextureID);
+	glUniform1i(glGetUniformLocation(shader, "treeTexture"), 0);
+
 	// Check water vs. land
 	float waterLevel = 0.2f;
+	GLuint treeTextureID;
+	SDL_Surface *surface;
+	surface = IMG_Load("tree_billboard.png");
+	glGenTextures(1,&treeTextureID);
+	glBindTexture(GL_TEXTURE_2D, treeTextureID);
+	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,surface->w,surface->h,0,GL_RGBA,GL_UNSIGNED_BYTE,surface->pixels);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+	SDL_FreeSurface(surface);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, treeTextureID);
+	glUniform1i(glGetUniformLocation(shader, "treeTexture"), 0);
+
+	// Check water vs. land
+	glUniform1i(glGetUniformLocation(shader, "waterLevel"), waterLevel);
     vec3 spherePos = normalize(vec3(x, y, z));
 
 
     float displacement = noise(spherePos * 5.0f) * 0.1f;
     float height = 1.0f + displacement; // '1.0' because spherePos is unit length
+	printf("height: %f", height);
 	if (height > waterLevel)
 	{
 		// spherePos += spherePos * displacement * 5.0 -> multiply radius
@@ -233,6 +268,8 @@ void init(void)
 	glUniformMatrix4fv(glGetUniformLocation(shader, "camMatrix"), 1, GL_TRUE, worldToViewMatrix.m);
 	glUniformMatrix4fv(glGetUniformLocation(shader, "specMatrix"), 1, GL_TRUE, worldToViewMatrix2nd.m);
 	glUniformMatrix4fv(glGetUniformLocation(shader, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
+
+	glUniform3f(glGetUniformLocation(shader, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
 
 }
 void display(void)
@@ -314,7 +351,7 @@ void mouseDragged(int x, int y)
 	prevy = y;
 
     // Check water vs. land
-	float waterLevel = 0.2f;
+	// float waterLevel = 0.2f;
     vec3 spherePos = normalize(vec3(x, y, z));
 
 
@@ -335,6 +372,10 @@ void mouseDragged(int x, int y)
 
 	worldToViewMatrix = lookAt(cameraPos, cameraPos + forward, up);
 	glUniformMatrix4fv(glGetUniformLocation(shader, "camMatrix"), 1, GL_TRUE, worldToViewMatrix.m);
+
+	glUniform3f(glGetUniformLocation(shader, "cameraPos"), cameraPos.x, cameraPos.y, cameraPos.z);
+
+	printVec3(cameraPos);
 
 	glutPostRedisplay();
 }
