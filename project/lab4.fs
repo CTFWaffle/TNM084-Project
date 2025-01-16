@@ -207,21 +207,26 @@ void main(void)
     else
     {
 
-        float minHeight = 0.02; // Min height for terrain mapping
-        float maxHeight = 1.0; // Max height for terrain mapping
+        float minHeight = waterLevel; // Min height for terrain mapping
+        float maxHeight = 1.5; // Max height for terrain mapping
 
         float height = length(modelPosition); // Distance from origin (center of the sphere)
         float normalizedHeight = (height - minHeight) / (maxHeight - minHeight);
 
         
         vec3 waterColor = vec3(0.2, 0.2, 0.6);
-        vec3 sandColor = vec3(0.9, 0.85, 0.7);
+        vec3 sandColor = vec3(0.6, 0.55, 0.5);//vec3(0.9, 0.85, 0.7);
         vec3 grassColor = vec3(0.18, 0.24, 0.07);//vec3(0.4, 0.6, 0.4);
+        vec3 grassColor2 = vec3(0.18, 0.25, 0.08);
         vec3 mountainColor = vec3(0.29, 0.29, 0.28);//vec3(0.4, 0.35, 0.3);
         vec3 snowColor = vec3(0.9, 0.9, 0.9);
+        vec3 finalColor;
 
-        if (normalizedHeight < waterLevel) {
-            out_Color = vec4(waterColor,1.0);
+        
+
+        if (height < waterLevel) {
+            finalColor = waterColor;
+            out_Color = vec4(finalColor,1.0);
         } else {
             float t = smoothstep(0.6, 1.0, normalizedHeight);
 
@@ -235,23 +240,38 @@ void main(void)
 
 
             // Adjust thresholds
-            float waterToGrass = smoothstep(0.05, 0.9, normalizedHeight);
-            float grassToMountain = smoothstep(0.9, 1.07, normalizedHeight);
-            float mountainToSnow = smoothstep(1.07, 1.09, normalizedHeight);
+            float waterToGrass = smoothstep(0, 0.01, normalizedHeight);
+            float grassToMountain = smoothstep(0.2, 0.5, normalizedHeight);
+            float mountainToSnow = smoothstep(0.8, 1.0, normalizedHeight);
 
-            // Add desert blending
-            float desertProbability = smoothstep(1.01, 1.015, normalizedHeight);
-
-            vec3 baseColor = mix(waterColor, grassColor, waterToGrass);
+            // vec3 baseColor = mix(waterColor, grassColor, waterToGrass);
+            vec3 baseColor = mix(sandColor, grassColor, waterToGrass);
+            // vec3 baseColor = grassColor;
             baseColor = mix(baseColor, mountainColor, grassToMountain);
             baseColor = mix(baseColor, snowColor, mountainToSnow);
 
 
             // Add curl noise for ruggedness
-            vec3 finalColor = baseColor + curlColor;
+            finalColor = baseColor + curlColor;
 
             out_Color = vec4(finalColor, 1.0);
         }
 
     }
 }
+
+
+/*
+green colors:
+vec3(0.18, 0.24, 0.07)
+vec3(0.17, 0.22, 0.07)
+vec3(0.18, 0.23, 0.06)
+vec3(0.16, 0.22, 0.07)
+vec3(0.18, 0.25, 0.08)
+trunk colors:
+vec3(0.25, 0.25, 0.25)
+vec3(0.29, 0.29, 0.29)
+vec3(0.29, 0.29, 0.28)
+vec3(0.27, 0.27, 0.27)
+vec3(0.31, 0.31, 0.31)
+*/

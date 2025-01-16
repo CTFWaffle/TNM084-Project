@@ -61,9 +61,7 @@ void main()
 
     float displacement = noise(spherePos*5.0)*0.25;
 
-    //float waterLevel = 0.2;
-
-    float height = length(spherePos) + displacement;
+    float height = 1.0 + displacement;
 
     if (height > waterLevel) {
         // Apply displacement normally

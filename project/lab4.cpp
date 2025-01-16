@@ -103,7 +103,7 @@ float x = cos(lat) * cos(lon);
 float y = cos(lat) * sin(lon);
 float z = sin(lat);
 float standingHeight = .5f; // e.g. a person’s height in the same units
-float waterLevel = 100.0f;
+float waterLevel = 0.98f;
 
 float sizeX = 1600;
 float sizeY = 1600;
@@ -190,27 +190,36 @@ void init(void)
 
 	GLuint treeTextureID;
 	SDL_Surface *surface;
-	surface = IMG_Load("tree_billboard.png");
-	glGenTextures(1,&treeTextureID);
+	surface = IMG_Load("tree_billboard_small.png");
+	glGenTextures(1, &treeTextureID);
 	glBindTexture(GL_TEXTURE_2D, treeTextureID);
-	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,surface->w,surface->h,0,GL_RGBA,GL_UNSIGNED_BYTE,surface->pixels);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+
+	// Upload the texture data
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, surface->w, surface->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
+
+	// Generate mipmaps
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	// Set texture filtering parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	// Free the surface after uploading
 	SDL_FreeSurface(surface);
 
+	// Bind and activate texture
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, treeTextureID);
 	glUniform1i(glGetUniformLocation(shader, "treeTexture"), 0);
 
 
 	// Check water vs. land
-	glUniform1i(glGetUniformLocation(shader, "waterLevel"), waterLevel);
+	glUniform1f(glGetUniformLocation(shader, "waterLevel"), waterLevel);
     vec3 spherePos = normalize(vec3(x, y, z));
 
 
-    float displacement = noise(spherePos * 5.0f) * 0.1f;
+    float displacement = noise(spherePos * 5.0f) * 0.25f;
     float height = 1.0f + displacement; // '1.0' because spherePos is unit length
-	printf("height: %f", height);
 	if (height > waterLevel)
 	{
 		// spherePos += spherePos * displacement * 5.0 -> multiply radius
@@ -230,6 +239,7 @@ void init(void)
 	// Initialize transformations
 	// projectionMatrix = frustum(-0.5, 0.5, -0.5, 0.5, 1.0, 100.0);
 	projectionMatrix = frustum(-0.1, 0.1, -0.5, 0.5, 0.05, 10.0);
+
 
 	//glm::frustum(
 	// 	float left,   float right,
@@ -340,7 +350,7 @@ void mouseDragged(int x, int y)
     vec3 spherePos = normalize(vec3(x, y, z));
 
 
-    float displacement = noise(spherePos * 5.0f) * 0.1f;
+    float displacement = noise(spherePos * 5.0f) * 0.25f;
     float height = 1.0f + displacement; // '1.0' because spherePos is unit length
 	if (height > waterLevel)
 	{

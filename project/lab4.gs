@@ -15,6 +15,7 @@ flat out int isBillboard;
 out vec3 gsWorldPos;
 
 uniform sampler2D tex;
+uniform float waterLevel;
 
 uniform mat4 projMatrix;
 uniform mat4 mdlMatrix;
@@ -151,23 +152,37 @@ void spawnBillboard(vec3 centerWS) // center in world space
     // 1) Compute forward, but flatten out the y-component so billboard is always upright
     vec3 forward = cameraPos - centerWS;
     //forward.y = 0.0;           // ignore vertical component
+    if (abs(dot(cameraPos, centerWS)) > 0.99) {  // If up is almost parallel to forward
+        forward = vec3(0.0, 0.0, 1.0);        // Use a global up direction
+    }
     forward = normalize(forward);
+    // vec3 forward = vec3(0,0,1.0);
 
-    // 2) 'Right' is cross(globalUp, forward)
-    vec3 globalUp = vec3(0, 1, 0);
-    vec3 right = normalize(cross(normalize(centerWS), forward));
-
-    // 3) Billboard's 'up' remains globalUp (0,1,0)
     vec3 up = normalize(centerWS);
 
+    if (abs(dot(up, forward)) > 0.99) {  // If up is almost parallel to forward
+        // fallback #1
+        up = vec3(0.0, 1.0, 0.0);        // Use a global up direction
+        float d = dot(up, forward);
+        // fallback #2
+        if (abs(d) > 0.99) {
+            // If STILL parallel, maybe pick a different fallback
+            up = vec3(0.0, 0.0, 1.0);
+        }
+    }
+    // vec3 right = normalize(cross(up, forward));
 
-    float halfWidth  = 0.02;
-    float halfHeight = 0.04;
+    vec3 c = cross(up, forward);
+    float cLen = length(c);
+    if (cLen < 1e-5) {
+        // fallback for right
+        c = vec3(1.0, 0.0, 0.0); 
+    }
+    vec3 right = normalize(c);
+  
 
-    // vec3 tl = centerWS + (-right * halfWidth) + (up * halfHeight);
-    // vec3 bl = centerWS + (-right * halfWidth);
-    // vec3 tr = centerWS + ( right * halfWidth) + (up * halfHeight);
-    // vec3 br = centerWS + ( right * halfWidth);
+    float halfWidth  = 0.08;
+    float halfHeight = 0.09;
 
     // corners
     vec3 tl1 = centerWS - right*halfWidth + up*halfHeight;
@@ -179,26 +194,6 @@ void spawnBillboard(vec3 centerWS) // center in world space
     vec3 bl2 = centerWS - forward*halfWidth - up*halfHeight;
     vec3 tr2 = centerWS + forward*halfWidth + up*halfHeight;
     vec3 br2 = centerWS + forward*halfWidth - up*halfHeight;
-
-
-
-    // gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(tl, 1.0);
-    // isBillboard = 1;
-    // EmitVertex();
-
-    // gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(bl, 1.0);
-    // isBillboard = 1;
-    // EmitVertex();
-
-    // gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(tr, 1.0);
-    // isBillboard = 1;
-    // EmitVertex();
-
-    // gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(br, 1.0);
-    // isBillboard = 1;
-    // EmitVertex();
-
-    // EndPrimitive();
 
     // QUAD 1
     gl_Position = projMatrix * camMatrix * mdlMatrix * vec4(tl1, 1.0);
@@ -265,9 +260,11 @@ void main()
     vec3 centr = (p0 + p1 + p2) / 3.0;
 
     float altitude = length(centr);
-    float rnd = noise(vec2(centr.x, centr.z));
+    vec3 rndVec = random3(centr);
+    float rnd = abs(rndVec.x + rndVec.y + rndVec.z);
 
-    if (rnd > 0.1 && altitude > 0.2 && altitude < 1.0)// && altitude < 1.05 && rnd > 0.8)
+
+    if (rnd > 1.3 && altitude > waterLevel)//> 0.2 && altitude < 1.0)// && altitude < 1.05 && rnd > 0.8)
     //if (altitude > 0.6)
     //if (gl_PrimitiveIDIn == 0)
     {
