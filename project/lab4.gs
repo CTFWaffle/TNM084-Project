@@ -134,44 +134,15 @@ void computeVertex(int nr)
 
 void spawnBillboard(vec3 centerWS) // center in world space
 {
-    // offset along the sphere normal if you want
     centerWS += normalize(centerWS) * 0.1;
 
-    // compute corners in world space
-    // vec3 up    = vec3(0,1,0);
-    // vec3 right = vec3(1,0,0);
-
-
-    // TODO These are wrong if the billboards should face the camera
-    // vec3 forward = normalize(centerWS - cameraPos);
-    // vec3 forward = normalize(cameraPos - centerWS);
-
-    // vec3 right = normalize(cross(vec3(0.0,1.0,0.0), forward));
-    // vec3 up    = cross(forward, right);   // or do another cross to keep it orthonormal
-
-    // 1) Compute forward, but flatten out the y-component so billboard is always upright
-    vec3 forward = cameraPos - centerWS;
-    //forward.y = 0.0;           // ignore vertical component
-    if (abs(dot(cameraPos, centerWS)) > 0.99) {  // If up is almost parallel to forward
-        forward = vec3(0.0, 0.0, 1.0);        // Use a global up direction
-    }
-    forward = normalize(forward);
-    // vec3 forward = vec3(0,0,1.0);
-
+    // Compute forward, but flatten out the y-component so billboard is always upright
     vec3 up = normalize(centerWS);
 
-    if (abs(dot(up, forward)) > 0.99) {  // If up is almost parallel to forward
-        // fallback #1
-        up = vec3(0.0, 1.0, 0.0);        // Use a global up direction
-        float d = dot(up, forward);
-        // fallback #2
-        if (abs(d) > 0.99) {
-            // If STILL parallel, maybe pick a different fallback
-            up = vec3(0.0, 0.0, 1.0);
-        }
-    }
-    // vec3 right = normalize(cross(up, forward));
-
+    vec3 forward = cameraPos - centerWS;
+    forward.y = centerWS.y;           // ignore vertical component
+    forward = normalize(forward);
+ 
     vec3 c = cross(up, forward);
     float cLen = length(c);
     if (cLen < 1e-5) {
@@ -264,16 +235,10 @@ void main()
     float rnd = abs(rndVec.x + rndVec.y + rndVec.z);
 
 
-    if (rnd > 1.3 && altitude > waterLevel)//> 0.2 && altitude < 1.0)// && altitude < 1.05 && rnd > 0.8)
-    //if (altitude > 0.6)
-    //if (gl_PrimitiveIDIn == 0)
+    if (rnd > 1.4 && altitude > waterLevel)
     {
-
-        //only spawn billboards when walking the planet
         spawnBillboard(centr);
     }
-
-    
 
 }
 

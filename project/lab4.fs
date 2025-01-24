@@ -97,95 +97,102 @@ float pnoise3(float x, float y, float z) {
     return 0.936 * LERP(s, n0, n1);
 }
 
-
-
-vec2 random2(vec2 st)
+vec3 random3(vec3 st)
 {
-    st = vec2( dot(st,vec2(127.1,311.7)),
-              dot(st,vec2(269.5,183.3)) );
-    return -1.0 + 2.0*fract(sin(st)*43758.5453123);
+    st = vec3(
+        dot(st, vec3(127.1, 311.7,  74.7)),
+        dot(st, vec3(269.5, 183.3, 246.1)),
+        dot(st, vec3(113.5, 271.9, 124.6))
+    );
+    
+    return -1.0 + 2.0 * fract(sin(st) * 43758.5453123);
 }
 
-// Gradient Noise by Inigo Quilez - iq/2013
-// https://www.shadertoy.com/view/XdXGW8
-float noise(vec2 st)
+vec3 computeCurl(vec3 p)
 {
-    vec2 i = floor(st);
-    vec2 f = fract(st);
+    float eps = 0.001;
 
-    vec2 u = f*f*(3.0-2.0*f);
+    // Offsets for partials
+    vec3 px = vec3(eps, 0.0, 0.0);
+    vec3 py = vec3(0.0, eps, 0.0);
+    vec3 pz = vec3(0.0, 0.0, eps);
 
-    return mix( mix( dot( random2(i + vec2(0.0,0.0) ), f - vec2(0.0,0.0) ),
-                     dot( random2(i + vec2(1.0,0.0) ), f - vec2(1.0,0.0) ), u.x),
-                mix( dot( random2(i + vec2(0.0,1.0) ), f - vec2(0.0,1.0) ),
-                     dot( random2(i + vec2(1.0,1.0) ), f - vec2(1.0,1.0) ), u.x), u.y);
+    // Forward/backward samples in x, y, and z directions
+    vec3 Fx1 = p * pnoise3(p.x + eps, p.y, p.z);
+    vec3 Fx2 = p * pnoise3(p.x - eps, p.y, p.z);
+    vec3 Fy1 = p * pnoise3(p.x, p.y + eps, p.z);
+    vec3 Fy2 = p * pnoise3(p.x, p.y - eps, p.z);
+    vec3 Fz1 = p * pnoise3(p.x, p.y, p.z + eps);
+    vec3 Fz2 = p * pnoise3(p.x, p.y, p.z - eps);
+
+    // Finite differences of each component
+    vec3 dFx = (Fx1 - Fx2) / (2.0 * eps);
+    vec3 dFy = (Fy1 - Fy2) / (2.0 * eps);
+    vec3 dFz = (Fz1 - Fz2) / (2.0 * eps);
+
+    // Curl F = ( dFz.y - dFy.z, dFx.z - dFz.x, dFy.x - dFx.y )
+    float curlX = dFz.y - dFy.z;
+    float curlY = dFx.z - dFz.x;
+    float curlZ = dFy.x - dFx.y;
+
+    return vec3(curlX, curlY, curlZ);
 }
 
-vec2 computeCurl(vec2 st) {
-	float eps = 0.0001;
-	//Find gradient of the noise by cross method
-	float dx = (noise(st + vec2(eps, 0)) - noise(st + vec2(-eps, 0))) / (2*eps); 
-	float dy = (noise(st + vec2(0, eps)) - noise(st + vec2(0, -eps))) / (2*eps); 
-	return vec2(dy, -dx); // side vector by the gradient
+vec3 rot3(vec3 v, float r)
+{
+    // Rotate around z-axis by angle r using a 3x3 matrix
+    mat3 R = mat3(
+         cos(r),  sin(r),  0.0,
+        -sin(r),  cos(r),  0.0,
+         0.0,     0.0,     1.0
+    );
+    return R * v;
 }
 
-vec2 rot2(vec2 v, float r) {
-    vec2 res;
-    res.x = cos(r) * v.x + sin(r) * v.y;
-    res.y = -sin(r) * v.x + cos(r) * v.y;
-    return res;
-}
-
-float noiser(vec3 st, float r) {
+float noiser3(vec3 st, float r)
+{
+    // Integer cell coords and fractional part
     vec3 i = floor(st);
     vec3 f = fract(st);
 
-    // Smootherstep interpolation
+    // Perlin "fade" function
     vec3 u = f * f * (3.0 - 2.0 * f);
 
-    // Use combinations of x, y, z for randomization
-    return mix(
-        mix(
-            mix(
-                dot(vec3(rot2(random2(i.xy + vec2(st.z, st.x)), r), st.z), f - vec3(0.0, 0.0, 0.0)),
-                dot(vec3(rot2(random2(i.xy + vec2(st.y, st.z)), r), st.x), f - vec3(1.0, 0.0, 0.0)),
-                u.x
-            ),
-            mix(
-                dot(vec3(rot2(random2(i.xy + vec2(st.z, st.y)), r), st.x), f - vec3(0.0, 1.0, 0.0)),
-                dot(vec3(rot2(random2(i.xy + vec2(st.x, st.z)), r), st.y), f - vec3(1.0, 1.0, 0.0)),
-                u.x
-            ),
-            u.y
-        ),
-        mix(
-            mix(
-                dot(vec3(rot2(random2(i.xy + vec2(st.y, st.x)), r), st.z), f - vec3(0.0, 0.0, 1.0)),
-                dot(vec3(rot2(random2(i.xy + vec2(st.z, st.y)), r), st.x), f - vec3(1.0, 0.0, 1.0)),
-                u.x
-            ),
-            mix(
-                dot(vec3(rot2(random2(i.xy + vec2(st.x, st.y)), r), st.z), f - vec3(0.0, 1.0, 1.0)),
-                dot(vec3(rot2(random2(i.xy + vec2(st.y, st.z)), r), st.y), f - vec3(1.0, 1.0, 1.0)),
-                u.x
-            ),
-            u.y
-        ),
-        u.z
-    );
+    // Gradients (rotated) at the 8 corners
+    // and their dot with the position offset (f - corner).
+    float c000 = dot(rot3(random3(i + vec3(0,0,0)), r), f - vec3(0,0,0));
+    float c100 = dot(rot3(random3(i + vec3(1,0,0)), r), f - vec3(1,0,0));
+    float c010 = dot(rot3(random3(i + vec3(0,1,0)), r), f - vec3(0,1,0));
+    float c110 = dot(rot3(random3(i + vec3(1,1,0)), r), f - vec3(1,1,0));
+    float c001 = dot(rot3(random3(i + vec3(0,0,1)), r), f - vec3(0,0,1));
+    float c101 = dot(rot3(random3(i + vec3(1,0,1)), r), f - vec3(1,0,1));
+    float c011 = dot(rot3(random3(i + vec3(0,1,1)), r), f - vec3(0,1,1));
+    float c111 = dot(rot3(random3(i + vec3(1,1,1)), r), f - vec3(1,1,1));
+
+    // Now blend along x, then y, then z
+    float c00 = mix(c000, c100, u.x);
+    float c01 = mix(c001, c101, u.x);
+    float c10 = mix(c010, c110, u.x);
+    float c11 = mix(c011, c111, u.x);
+
+    float c0  = mix(c00, c10, u.y);
+    float c1  = mix(c01, c11, u.y);
+
+    // Final trilinear interpolation
+    return mix(c0, c1, u.z);
 }
 
-vec3 fbm(vec3 p){
+float fbm(vec3 p, float r){
     float value = 0.0;
     float amplitude = 0.3;
     float frequency = 1.5;
     float octave = 51.0;
     for(int i = 0; i < octave; i++){
-        value += amplitude * noiser(vec3(p.x*frequency, p.y*frequency, p.z*frequency), p.x);
+        value += amplitude * noiser3(vec3(p.x*frequency, p.y*frequency, p.z*frequency), r);
         frequency *= 2.0;
         amplitude *= 0.5;
     }
-    return p*value;
+    return value;
 }
 
 void main(void)
@@ -193,15 +200,12 @@ void main(void)
 
     if (isBillboard == 1)
     {
-        // RENDER TREE/BUSH BILLBOARD
-        
-        // Option A: Sample a texture with alpha (common approach for billboard trees)
-        //   Make sure you set up blending or alpha testing in your main app code.
+        // RENDER TREE BILLBOARD
         vec4 treeColor = texture(treeTexture, gsTexCoord);
 
-        // Optionally you can do an alpha test (to discard pixels that are fully transparent)
+        // Discard pixels that are fully transparent
         if (treeColor.a < 0.1) discard;
-        // vec4 treeColor = vec4(150.0,75.0,0.0,1.0);
+
         out_Color = treeColor;
     }
     else
@@ -214,29 +218,27 @@ void main(void)
         float normalizedHeight = (height - minHeight) / (maxHeight - minHeight);
 
         
-        vec3 waterColor = vec3(0.2, 0.2, 0.6);
-        vec3 sandColor = vec3(0.6, 0.55, 0.5);//vec3(0.9, 0.85, 0.7);
-        vec3 grassColor = vec3(0.18, 0.24, 0.07);//vec3(0.4, 0.6, 0.4);
+        vec3 waterColor = vec3(0.027,0.090,0.180);
+        vec3 sandColor = vec3(0.6, 0.55, 0.5);
+        vec3 grassColor = vec3(0.18, 0.24, 0.07);
         vec3 grassColor2 = vec3(0.18, 0.25, 0.08);
-        vec3 mountainColor = vec3(0.29, 0.29, 0.28);//vec3(0.4, 0.35, 0.3);
+        vec3 mountainColor = vec3(0.29, 0.29, 0.28);
         vec3 snowColor = vec3(0.9, 0.9, 0.9);
         vec3 finalColor;
 
         
 
         if (height < waterLevel) {
-            finalColor = waterColor;
+            float flowIntensity = fbm(modelPosition * 10.0, u_time*4);
+
+            finalColor = waterColor + vec3(0.5, 0.5, 0.7) * flowIntensity * 0.5;
             out_Color = vec4(finalColor,1.0);
         } else {
             float t = smoothstep(0.6, 1.0, normalizedHeight);
 
-            vec3 color;
-
-            // Add details using curl noise (optional)
-            float flowIntensity = noiser(fbm(modelPosition) * 10.0, 0.1);
-            vec2 curl = computeCurl(modelPosition.xy * flowIntensity * 1.0);
+            vec3 curl = computeCurl(modelPosition * 50.0);
             float curlIntensity = length(curl);
-            vec3 curlColor = vec3(0.2, 0.2, 0.2) * curlIntensity * 0.5;
+            vec3 curlColor = vec3(0.2, 0.2, 0.2) * curlIntensity * 0.005;
 
 
             // Adjust thresholds
@@ -252,7 +254,7 @@ void main(void)
 
 
             // Add curl noise for ruggedness
-            finalColor = baseColor + curlColor;
+            finalColor = baseColor - mix(curlColor, baseColor, 0.3) * 0.3;
 
             out_Color = vec4(finalColor, 1.0);
         }
